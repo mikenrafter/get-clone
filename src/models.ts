@@ -84,6 +84,9 @@ export interface TabsApi {
 	create(details: { cookieStoreId?: string; url?: string; index?: number; windowId?: number; active?: boolean }): Promise<Tab>
 	get(tabId: number): Promise<Tab>
 	discard(tabId: number): Promise<void>
+	query(queryInfo: { cookieStoreId?: string }): Promise<Tab[]>
+	remove(tabId: number): Promise<void>
+	executeScript(tabId: number, details: { code: string }): Promise<unknown[]>
 	onUpdated: {
 		addListener(listener: (id: number, changeInfo: TabChangeInfo, tab: Tab) => void | Promise<void>): void
 	}
@@ -122,6 +125,7 @@ export interface CookieSetDetails {
 export interface CookiesApi {
 	getAll(details: { storeId: string }): Promise<Cookie[]>
 	set(details: CookieSetDetails): Promise<Cookie | null>
+	remove(details: { url: string; name: string; storeId: string }): Promise<void>
 }
 
 export interface BrowserApi {
