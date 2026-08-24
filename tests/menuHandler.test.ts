@@ -635,11 +635,12 @@ describe('MenuHandlerImpl.handleClick', () => {
 		expect(cloneRuntime.cloneToTemporary).not.toHaveBeenCalled()
 	})
 
-	it('dispatches MENU_RESTRICTED clicks to open about:addons in a new tab', async () => {
+	it('dispatches MENU_RESTRICTED clicks to open the restricted-site info page with the blocked domain', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.handleClick({ menuItemId: MENU_RESTRICTED }, tab)
 
-		expect(browserApi.tabs.create).toHaveBeenCalledWith({ url: 'about:addons' })
+		expect(browserApi.runtime.getURL).toHaveBeenCalledWith('info/restricted-site.html?domain=example.com')
+		expect(browserApi.tabs.create).toHaveBeenCalledWith({ url: 'moz-extension://test/info/restricted-site.html?domain=example.com' })
 		expect(clearRuntime.clearDomain).not.toHaveBeenCalled()
 	})
 })

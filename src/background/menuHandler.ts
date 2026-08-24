@@ -120,7 +120,9 @@ export class MenuHandlerImpl implements MenuHandler {
 		}
 
 		if (menuItemId === MENU_RESTRICTED) {
-			await browserApi.tabs.create({ url: 'about:addons' })
+			const hostname = tab.url !== undefined ? new URL(tab.url).hostname : ''
+			const infoUrl = browserApi.runtime.getURL(`info/restricted-site.html?domain=${encodeURIComponent(hostname)}`)
+			await browserApi.tabs.create({ url: infoUrl })
 			return
 		}
 
