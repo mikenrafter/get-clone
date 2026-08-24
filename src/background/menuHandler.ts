@@ -8,6 +8,7 @@ import {
 	MENU_CLEAR,
 	MENU_RESTRICTED,
 	NEW_TEMP_CONTAINER_SENTINEL,
+	NO_CONTAINER,
 	QUARANTINED_DOMAINS,
 	PRIVILEGED_URL_SCHEMES,
 } from '../constants'
@@ -51,12 +52,12 @@ export class MenuHandlerImpl implements MenuHandler {
 
 		const containers = await browserApi.contextualIdentities.query({})
 		const activeCookieStoreId = tab.cookieStoreId
+		const isActiveNoContainer = activeCookieStoreId === undefined || activeCookieStoreId === NO_CONTAINER
 
 		const permanentContainers: ContextualIdentity[] = []
 		const temporaryContainers: ContextualIdentity[] = []
 
 		for (const container of containers) {
-			if (container.cookieStoreId === activeCookieStoreId) continue
 			const isTemp = await tcLayer.isTempContainer(container.cookieStoreId)
 			if (isTemp) {
 				temporaryContainers.push(container)
@@ -66,10 +67,12 @@ export class MenuHandlerImpl implements MenuHandler {
 		}
 
 		if (!tcLayer.isPresent()) {
+			await browserApi.menus.create({ id: MENU_PRIMARY, title: 'Clone to Container', contexts: ['tab'] })
+			await this.createNoContainerItem(isActiveNoContainer)
 			for (const container of permanentContainers) {
-				await this.createContainerItem(MENU_PRIMARY, container, undefined)
+				await this.createContainerItem(MENU_PRIMARY, container, MENU_PRIMARY, activeCookieStoreId)
 			}
-			await browserApi.menus.create({ id: MENU_CLEAR, title: 'Clear Site Data for This Container', contexts: ['tab'] })
+			await browserApi.menus.create({ id: MENU_CLEAR, parentId: MENU_PRIMARY, title: 'Clear Site Data for This Container', contexts: ['tab'] })
 			await browserApi.menus.refresh()
 			return
 		}
@@ -85,11 +88,13 @@ export class MenuHandlerImpl implements MenuHandler {
 
 		await browserApi.menus.create({ id: MENU_SECONDARY, parentId: MENU_PRIMARY, title: secondaryTitle, contexts: ['tab'] })
 		for (const container of secondaryContainers) {
-			await this.createContainerItem(MENU_SECONDARY, container, MENU_SECONDARY)
+			await this.createContainerItem(MENU_SECONDARY, container, MENU_SECONDARY, activeCookieStoreId)
 		}
 
+		await this.createNoContainerItem(isActiveNoContainer)
+
 		for (const container of primaryContainers) {
-			await this.createContainerItem(MENU_PRIMARY, container, MENU_PRIMARY)
+			await this.createContainerItem(MENU_PRIMARY, container, MENU_PRIMARY, activeCookieStoreId)
 		}
 		await browserApi.menus.create({
 			id: `${MENU_PRIMARY}-${NEW_TEMP_CONTAINER_SENTINEL}`,
@@ -99,7 +104,7 @@ export class MenuHandlerImpl implements MenuHandler {
 			contexts: ['tab'],
 		})
 
-		await browserApi.menus.create({ id: MENU_CLEAR, title: 'Clear Site Data for This Container', contexts: ['tab'] })
+		await browserApi.menus.create({ id: MENU_CLEAR, parentId: MENU_PRIMARY, title: 'Clear Site Data for This Container', contexts: ['tab'] })
 
 		await browserApi.menus.refresh()
 	}
@@ -135,13 +140,30 @@ export class MenuHandlerImpl implements MenuHandler {
 		}
 	}
 
-	private async createContainerItem(prefix: string, container: ContextualIdentity, parentId: string | undefined): Promise<void> {
+	private async createContainerItem(
+		prefix: string,
+		container: ContextualIdentity,
+		parentId: string | undefined,
+		activeCookieStoreId: string | undefined,
+	): Promise<void> {
+		const isActive = container.cookieStoreId === activeCookieStoreId
 		await this.deps.browserApi.menus.create({
 			id: `${prefix}-${container.cookieStoreId}`,
 			...(parentId !== undefined ? { parentId } : {}),
 			title: container.name,
 			icons: { 16: `icons/${container.icon}.svg#${container.color}` },
 			contexts: ['tab'],
+			...(isActive ? { enabled: false } : {}),
+		})
+	}
+
+	private async createNoContainerItem(isActiveNoContainer: boolean): Promise<void> {
+		await this.deps.browserApi.menus.create({
+			id: `${MENU_PRIMARY}-${NO_CONTAINER}`,
+			parentId: MENU_PRIMARY,
+			title: 'No Container',
+			contexts: ['tab'],
+			...(isActiveNoContainer ? { enabled: false } : {}),
 		})
 	}
 }

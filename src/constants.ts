@@ -11,6 +11,13 @@ export const TEMP_CONTAINERS_EXTENSION_IDS = [
 /** Sentinel menu-item id suffix for "clone into a brand-new Temporary Container". */
 export const NEW_TEMP_CONTAINER_SENTINEL = 'new-temp-container'
 
+/**
+ * Firefox's real cookieStoreId for the default (no-container) cookie jar. Used as an
+ * ordinary cookieStoreId value in tabs.create/cookies.getAll/cookies.set, so "No Container"
+ * needs no special-casing in cloneRuntime — it's just another clone target.
+ */
+export const NO_CONTAINER = 'firefox-default'
+
 /** Menu item id prefixes — primary/secondary swap contents based on the active tab's container type. */
 export const MENU_PRIMARY = 'get-clone-primary'
 export const MENU_SECONDARY = 'get-clone-secondary'

@@ -10,6 +10,7 @@ import {
 	MENU_CLEAR,
 	MENU_RESTRICTED,
 	NEW_TEMP_CONTAINER_SENTINEL,
+	NO_CONTAINER,
 } from '../src/constants'
 
 function makeBrowserApi(): BrowserApi {
@@ -82,7 +83,7 @@ const allContainers: ContextualIdentity[] = [
 	{ name: 'Temp B', cookieStoreId: 'firefox-tmp-2', icon: 'circle', color: 'orange' },
 ]
 
-type CreateArgs = { id?: string; parentId?: string; type?: string; icons?: Record<number, string>; title?: string; contexts?: string[] }
+type CreateArgs = { id?: string; parentId?: string; type?: string; icons?: Record<number, string>; title?: string; contexts?: string[]; enabled?: boolean }
 
 function createCallsOf(browserApi: BrowserApi): CreateArgs[] {
 	return (browserApi.menus.create as ReturnType<typeof vi.fn>).mock.calls.map((c: unknown[]) => c[0] as CreateArgs)
@@ -95,8 +96,12 @@ function idsWithPrefix(calls: CreateArgs[], prefix: string): string[] {
 		.map(id => id.slice(`${prefix}-`.length))
 }
 
+function findById(calls: CreateArgs[], id: string): CreateArgs | undefined {
+	return calls.find(c => c.id === id)
+}
+
 // ---------------------------------------------------------------------------
-// TC not installed — flat permanent-only menu
+// TC not installed — single top-level item, flat permanent list underneath
 // ---------------------------------------------------------------------------
 
 describe('MenuHandlerImpl.buildMenus — TC not present', () => {
@@ -104,6 +109,7 @@ describe('MenuHandlerImpl.buildMenus — TC not present', () => {
 	let tcLayer: TcLayer
 	let cloneRuntime: CloneRuntime
 	let clearRuntime: ClearRuntime
+	const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
 
 	beforeEach(() => {
 		browserApi = makeBrowserApi()
@@ -113,19 +119,48 @@ describe('MenuHandlerImpl.buildMenus — TC not present', () => {
 		;(browserApi.contextualIdentities.query as ReturnType<typeof vi.fn>).mockResolvedValue(allContainers)
 	})
 
-	it('builds a flat menu containing only permanent containers', async () => {
-		const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
+	it('creates exactly one true top-level item (MENU_PRIMARY, no other parentId-less items)', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.buildMenus(tab)
+
+		const calls = createCallsOf(browserApi)
+		const topLevel = calls.filter(c => c.parentId === undefined)
+		expect(topLevel).toHaveLength(1)
+		expect(topLevel[0]!.id).toBe(MENU_PRIMARY)
+	})
+
+	it('includes every permanent container, including the active tab\'s own container', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
 		const primaryIds = idsWithPrefix(calls, MENU_PRIMARY)
-		// active tab's own container is excluded
-		expect(primaryIds.sort()).toEqual(['firefox-container-2'])
+		expect(primaryIds.sort()).toEqual(['firefox-container-1', 'firefox-container-2', NO_CONTAINER].sort())
+	})
+
+	it('disables the active tab\'s own container item instead of omitting it', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.buildMenus(tab)
+
+		const calls = createCallsOf(browserApi)
+		const activeItem = findById(calls, `${MENU_PRIMARY}-firefox-container-1`)
+		const otherItem = findById(calls, `${MENU_PRIMARY}-firefox-container-2`)
+		expect(activeItem!.enabled).toBe(false)
+		expect(otherItem!.enabled).not.toBe(false)
+	})
+
+	it('includes a No Container item, enabled, parented under MENU_PRIMARY', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.buildMenus(tab)
+
+		const calls = createCallsOf(browserApi)
+		const noContainer = findById(calls, `${MENU_PRIMARY}-${NO_CONTAINER}`)
+		expect(noContainer).toBeDefined()
+		expect(noContainer!.parentId).toBe(MENU_PRIMARY)
+		expect(noContainer!.enabled).not.toBe(false)
 	})
 
 	it('does not create a sentinel item', async () => {
-		const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
@@ -135,7 +170,6 @@ describe('MenuHandlerImpl.buildMenus — TC not present', () => {
 	})
 
 	it('does not create any secondary-prefixed items', async () => {
-		const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
@@ -145,33 +179,30 @@ describe('MenuHandlerImpl.buildMenus — TC not present', () => {
 	})
 
 	it('permanent container items carry their bundled icon', async () => {
-		const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const item = calls.find(c => c.id === `${MENU_PRIMARY}-firefox-container-2`)
+		const item = findById(calls, `${MENU_PRIMARY}-firefox-container-2`)
 		expect(item).toBeDefined()
 		expect(item!.icons).toEqual({ 16: 'icons/fingerprint.svg#green' })
 	})
 
 	it('calls menus.refresh() after rebuilding so an already-open menu picks up the new items', async () => {
-		const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		expect(browserApi.menus.refresh).toHaveBeenCalledTimes(1)
 	})
 
-	it('still creates a top-level MENU_CLEAR item even though TC is absent', async () => {
-		const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
+	it('creates MENU_CLEAR nested under MENU_PRIMARY, not as its own top-level item', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const clearItem = calls.find(c => c.id === MENU_CLEAR)
+		const clearItem = findById(calls, MENU_CLEAR)
 		expect(clearItem).toBeDefined()
-		expect(clearItem!.parentId).toBeUndefined()
+		expect(clearItem!.parentId).toBe(MENU_PRIMARY)
 		expect(clearItem!.contexts).toEqual(['tab'])
 	})
 })
@@ -195,22 +226,54 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a temporary c
 		;(browserApi.contextualIdentities.query as ReturnType<typeof vi.fn>).mockResolvedValue(allContainers)
 	})
 
-	it('primary submenu holds permanent containers plus the sentinel', async () => {
+	it('creates exactly one true top-level item (MENU_PRIMARY)', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.buildMenus(tab)
+
+		const calls = createCallsOf(browserApi)
+		const topLevel = calls.filter(c => c.parentId === undefined)
+		expect(topLevel).toHaveLength(1)
+		expect(topLevel[0]!.id).toBe(MENU_PRIMARY)
+	})
+
+	it('primary holds permanent containers plus the sentinel', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
 		const primaryIds = idsWithPrefix(calls, MENU_PRIMARY).sort()
-		expect(primaryIds).toEqual(['firefox-container-1', 'firefox-container-2', NEW_TEMP_CONTAINER_SENTINEL].sort())
+		expect(primaryIds).toEqual(['firefox-container-1', 'firefox-container-2', NEW_TEMP_CONTAINER_SENTINEL, NO_CONTAINER].sort())
 	})
 
-	it('secondary submenu holds the other existing temporary containers, excluding the active one', async () => {
+	it('secondary submenu holds every existing temporary container, including the active one', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
 		const secondaryIds = idsWithPrefix(calls, MENU_SECONDARY).sort()
-		expect(secondaryIds).toEqual(['firefox-tmp-2'])
+		expect(secondaryIds).toEqual(['firefox-tmp-1', 'firefox-tmp-2'].sort())
+	})
+
+	it('disables the active temporary container within secondary instead of omitting it', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.buildMenus(tab)
+
+		const calls = createCallsOf(browserApi)
+		const activeItem = findById(calls, `${MENU_SECONDARY}-firefox-tmp-1`)
+		const otherItem = findById(calls, `${MENU_SECONDARY}-firefox-tmp-2`)
+		expect(activeItem!.enabled).toBe(false)
+		expect(otherItem!.enabled).not.toBe(false)
+	})
+
+	it('includes a No Container item in primary, enabled (active tab has a real container)', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.buildMenus(tab)
+
+		const calls = createCallsOf(browserApi)
+		const noContainer = findById(calls, `${MENU_PRIMARY}-${NO_CONTAINER}`)
+		expect(noContainer).toBeDefined()
+		expect(noContainer!.parentId).toBe(MENU_PRIMARY)
+		expect(noContainer!.enabled).not.toBe(false)
 	})
 
 	it('sentinel item has the temp-container icon', async () => {
@@ -218,18 +281,19 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a temporary c
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const sentinel = calls.find(c => c.id === `${MENU_PRIMARY}-${NEW_TEMP_CONTAINER_SENTINEL}`)
+		const sentinel = findById(calls, `${MENU_PRIMARY}-${NEW_TEMP_CONTAINER_SENTINEL}`)
 		expect(sentinel).toBeDefined()
 		expect(sentinel!.icons).toEqual({ 16: 'icons/temp-container.svg' })
 	})
 
-	it('sentinel item is parented under the primary submenu', async () => {
+	it('sentinel item is parented under primary and always enabled', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const sentinel = calls.find(c => c.id === `${MENU_PRIMARY}-${NEW_TEMP_CONTAINER_SENTINEL}`)
+		const sentinel = findById(calls, `${MENU_PRIMARY}-${NEW_TEMP_CONTAINER_SENTINEL}`)
 		expect(sentinel!.parentId).toBe(MENU_PRIMARY)
+		expect(sentinel!.enabled).not.toBe(false)
 	})
 
 	it('existing temporary container item in secondary carries its own bundled icon', async () => {
@@ -237,7 +301,7 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a temporary c
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const item = calls.find(c => c.id === `${MENU_SECONDARY}-firefox-tmp-2`)
+		const item = findById(calls, `${MENU_SECONDARY}-firefox-tmp-2`)
 		expect(item).toBeDefined()
 		expect(item!.icons).toEqual({ 16: 'icons/circle.svg#orange' })
 	})
@@ -247,7 +311,7 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a temporary c
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const secondaryHeader = calls.find(c => c.id === MENU_SECONDARY)
+		const secondaryHeader = findById(calls, MENU_SECONDARY)
 		expect(secondaryHeader).toBeDefined()
 		expect(secondaryHeader!.parentId).toBe(MENU_PRIMARY)
 	})
@@ -267,14 +331,14 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a temporary c
 		expect(secondaryHeaderCallIndex).toBeLessThan(firstFlatPrimaryChildIndex)
 	})
 
-	it('also creates a top-level MENU_CLEAR item', async () => {
+	it('creates MENU_CLEAR nested under MENU_PRIMARY, not as its own top-level item', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const clearItem = calls.find(c => c.id === MENU_CLEAR)
+		const clearItem = findById(calls, MENU_CLEAR)
 		expect(clearItem).toBeDefined()
-		expect(clearItem!.parentId).toBeUndefined()
+		expect(clearItem!.parentId).toBe(MENU_PRIMARY)
 		expect(clearItem!.contexts).toEqual(['tab'])
 	})
 })
@@ -298,22 +362,43 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a permanent c
 		;(browserApi.contextualIdentities.query as ReturnType<typeof vi.fn>).mockResolvedValue(allContainers)
 	})
 
-	it('primary submenu holds existing temporary containers plus the sentinel', async () => {
+	it('primary holds existing temporary containers plus the sentinel', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
 		const primaryIds = idsWithPrefix(calls, MENU_PRIMARY).sort()
-		expect(primaryIds).toEqual(['firefox-tmp-1', 'firefox-tmp-2', NEW_TEMP_CONTAINER_SENTINEL].sort())
+		expect(primaryIds).toEqual(['firefox-tmp-1', 'firefox-tmp-2', NEW_TEMP_CONTAINER_SENTINEL, NO_CONTAINER].sort())
 	})
 
-	it('secondary submenu holds the other permanent containers, excluding the active one', async () => {
+	it('secondary submenu holds every permanent container, including the active one', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
 		const secondaryIds = idsWithPrefix(calls, MENU_SECONDARY).sort()
-		expect(secondaryIds).toEqual(['firefox-container-2'])
+		expect(secondaryIds).toEqual(['firefox-container-1', 'firefox-container-2'].sort())
+	})
+
+	it('disables the active permanent container within secondary instead of omitting it', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.buildMenus(tab)
+
+		const calls = createCallsOf(browserApi)
+		const activeItem = findById(calls, `${MENU_SECONDARY}-firefox-container-1`)
+		const otherItem = findById(calls, `${MENU_SECONDARY}-firefox-container-2`)
+		expect(activeItem!.enabled).toBe(false)
+		expect(otherItem!.enabled).not.toBe(false)
+	})
+
+	it('includes a No Container item in primary, enabled (active tab has a real container)', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.buildMenus(tab)
+
+		const calls = createCallsOf(browserApi)
+		const noContainer = findById(calls, `${MENU_PRIMARY}-${NO_CONTAINER}`)
+		expect(noContainer).toBeDefined()
+		expect(noContainer!.enabled).not.toBe(false)
 	})
 
 	it('sentinel stays pinned in primary even though primary now holds temporary containers', async () => {
@@ -321,10 +406,10 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a permanent c
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const sentinel = calls.find(c => c.id === `${MENU_PRIMARY}-${NEW_TEMP_CONTAINER_SENTINEL}`)
+		const sentinel = findById(calls, `${MENU_PRIMARY}-${NEW_TEMP_CONTAINER_SENTINEL}`)
 		expect(sentinel).toBeDefined()
 		expect(sentinel!.parentId).toBe(MENU_PRIMARY)
-		const secondarySentinel = calls.find(c => c.id === `${MENU_SECONDARY}-${NEW_TEMP_CONTAINER_SENTINEL}`)
+		const secondarySentinel = findById(calls, `${MENU_SECONDARY}-${NEW_TEMP_CONTAINER_SENTINEL}`)
 		expect(secondarySentinel).toBeUndefined()
 	})
 
@@ -333,7 +418,7 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a permanent c
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const item = calls.find(c => c.id === `${MENU_SECONDARY}-firefox-container-2`)
+		const item = findById(calls, `${MENU_SECONDARY}-firefox-container-2`)
 		expect(item).toBeDefined()
 		expect(item!.icons).toEqual({ 16: 'icons/fingerprint.svg#green' })
 	})
@@ -343,31 +428,39 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a permanent c
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const secondaryHeader = calls.find(c => c.id === MENU_SECONDARY)
+		const secondaryHeader = findById(calls, MENU_SECONDARY)
 		expect(secondaryHeader).toBeDefined()
 		expect(secondaryHeader!.parentId).toBe(MENU_PRIMARY)
 	})
 
-	it('treats a tab with no cookieStoreId the same as a permanent-container tab', async () => {
+	it('treats a tab with no cookieStoreId the same as a permanent-container tab, and disables No Container instead of any real container', async () => {
 		const noContainerTab: Tab = { id: 1, url: 'https://example.com', index: 0, windowId: 1 }
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(noContainerTab)
 
 		const calls = createCallsOf(browserApi)
 		const primaryIds = idsWithPrefix(calls, MENU_PRIMARY).sort()
-		expect(primaryIds).toEqual(['firefox-tmp-1', 'firefox-tmp-2', NEW_TEMP_CONTAINER_SENTINEL].sort())
+		expect(primaryIds).toEqual(['firefox-tmp-1', 'firefox-tmp-2', NEW_TEMP_CONTAINER_SENTINEL, NO_CONTAINER].sort())
 		const secondaryIds = idsWithPrefix(calls, MENU_SECONDARY).sort()
 		expect(secondaryIds).toEqual(['firefox-container-1', 'firefox-container-2'].sort())
+
+		// no real container matches an undefined cookieStoreId, so none of them are disabled
+		expect(findById(calls, `${MENU_SECONDARY}-firefox-container-1`)!.enabled).not.toBe(false)
+		expect(findById(calls, `${MENU_SECONDARY}-firefox-container-2`)!.enabled).not.toBe(false)
+
+		// the active state is instead reflected on the No Container item itself
+		const noContainer = findById(calls, `${MENU_PRIMARY}-${NO_CONTAINER}`)
+		expect(noContainer!.enabled).toBe(false)
 	})
 
-	it('also creates a top-level MENU_CLEAR item', async () => {
+	it('creates MENU_CLEAR nested under MENU_PRIMARY, not as its own top-level item', async () => {
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const clearItem = calls.find(c => c.id === MENU_CLEAR)
+		const clearItem = findById(calls, MENU_CLEAR)
 		expect(clearItem).toBeDefined()
-		expect(clearItem!.parentId).toBeUndefined()
+		expect(clearItem!.parentId).toBe(MENU_PRIMARY)
 		expect(clearItem!.contexts).toEqual(['tab'])
 	})
 })
@@ -434,7 +527,7 @@ describe('MenuHandlerImpl.buildMenus — restricted-site gating', () => {
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		const restricted = calls.find(c => c.id === MENU_RESTRICTED)
+		const restricted = findById(calls, MENU_RESTRICTED)
 		expect(restricted).toBeDefined()
 		expect(restricted!.contexts).toEqual(['tab'])
 		expect(restricted!.title).toBeDefined()
@@ -471,14 +564,14 @@ describe('MenuHandlerImpl.buildMenus — restricted-site gating', () => {
 		expect(browserApi.contextualIdentities.query).not.toHaveBeenCalled()
 	})
 
-	it('still builds the normal menu (MENU_PRIMARY + MENU_CLEAR) for an ordinary https site', async () => {
+	it('still builds the normal single-top-level menu for an ordinary https site', async () => {
 		const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
 		expect(calls.find(c => c.id === MENU_PRIMARY)).toBeDefined()
-		expect(calls.find(c => c.id === MENU_CLEAR)).toBeDefined()
+		expect(findById(calls, MENU_CLEAR)!.parentId).toBe(MENU_PRIMARY)
 		expect(calls.find(c => c.id === MENU_RESTRICTED)).toBeUndefined()
 	})
 })
@@ -523,6 +616,14 @@ describe('MenuHandlerImpl.handleClick', () => {
 
 		expect(cloneRuntime.cloneToTemporary).toHaveBeenCalledWith(tab)
 		expect(cloneRuntime.cloneToContainer).not.toHaveBeenCalled()
+	})
+
+	it('dispatches to cloneRuntime.cloneToContainer with the real default cookieStoreId for the No Container item', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.handleClick({ menuItemId: `${MENU_PRIMARY}-${NO_CONTAINER}` }, tab)
+
+		expect(cloneRuntime.cloneToContainer).toHaveBeenCalledWith(tab, NO_CONTAINER)
+		expect(cloneRuntime.cloneToTemporary).not.toHaveBeenCalled()
 	})
 
 	it('dispatches MENU_CLEAR clicks to clearRuntime.clearDomain', async () => {
