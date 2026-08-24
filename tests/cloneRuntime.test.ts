@@ -16,6 +16,9 @@ function makeBrowserApi(): BrowserApi {
 			create: vi.fn().mockResolvedValue({ id: 99, index: 1, cookieStoreId: 'firefox-container-2' }),
 			get: vi.fn(),
 			discard: vi.fn().mockResolvedValue(undefined),
+			query: vi.fn().mockResolvedValue([]),
+			remove: vi.fn().mockResolvedValue(undefined),
+			executeScript: vi.fn().mockResolvedValue([]),
 			onUpdated: { addListener: vi.fn() },
 		},
 		contextualIdentities: {
@@ -25,6 +28,7 @@ function makeBrowserApi(): BrowserApi {
 		cookies: {
 			getAll: vi.fn().mockResolvedValue([]),
 			set: vi.fn().mockResolvedValue(null),
+			remove: vi.fn().mockResolvedValue(undefined),
 		},
 		runtime: {
 			sendMessage: vi.fn().mockResolvedValue(false),
@@ -32,6 +36,9 @@ function makeBrowserApi(): BrowserApi {
 		},
 		management: {
 			get: vi.fn().mockRejectedValue(new Error('not installed')),
+		},
+		browsingData: {
+			remove: vi.fn().mockResolvedValue(undefined),
 		},
 	}
 }
@@ -162,7 +169,9 @@ describe('CloneRuntimeImpl.cloneToContainer', () => {
 		const listener = getRegisteredOnUpdatedListener(browserApi)
 		await listener(99, { status: 'complete' }, { id: 99, index: 1, cookieStoreId: 'firefox-container-2' })
 
-		expect('remove' in browserApi.tabs).toBe(false)
+		// tabs.remove now exists on TabsApi (needed by clearRuntime's clear-domain-data flow),
+		// so the guardrail here is behavioral: the clone flow itself must never call it.
+		expect(browserApi.tabs.remove).not.toHaveBeenCalled()
 		expect('update' in browserApi.tabs).toBe(false)
 		expect(browserApi.tabs.discard).toHaveBeenCalledTimes(1)
 		expect(browserApi.tabs.discard).toHaveBeenCalledWith(sourceTab.id)

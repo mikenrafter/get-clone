@@ -22,6 +22,7 @@
     "contextualIdentities",
     "cookies",
     "management",
+    "browsingData",
     "<all_urls>"
   ]
 }

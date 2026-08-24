@@ -128,11 +128,27 @@ export interface CookiesApi {
 	remove(details: { url: string; name: string; storeId: string }): Promise<void>
 }
 
+export interface BrowsingDataRemovalOptions {
+	cookieStoreId?: string
+	hostnames?: string[]
+}
+
+export interface BrowsingDataTypeSet {
+	cookies?: boolean
+	localStorage?: boolean
+	indexedDB?: boolean
+}
+
+export interface BrowsingDataApi {
+	remove(options: BrowsingDataRemovalOptions, dataTypes: BrowsingDataTypeSet): Promise<void>
+}
+
 export interface BrowserApi {
 	menus: MenusApi
 	tabs: TabsApi
 	contextualIdentities: ContextualIdentitiesApi
 	cookies: CookiesApi
+	browsingData: BrowsingDataApi
 	runtime: RuntimeApi
 	management: ManagementApi
 }

@@ -16,6 +16,9 @@ function makeBrowserApi(): BrowserApi {
 			create: vi.fn().mockResolvedValue({ id: 99, index: 0 }),
 			get: vi.fn(),
 			discard: vi.fn().mockResolvedValue(undefined),
+			query: vi.fn().mockResolvedValue([]),
+			remove: vi.fn().mockResolvedValue(undefined),
+			executeScript: vi.fn().mockResolvedValue([]),
 			onUpdated: { addListener: vi.fn() },
 		},
 		contextualIdentities: {
@@ -25,6 +28,7 @@ function makeBrowserApi(): BrowserApi {
 		cookies: {
 			getAll: vi.fn().mockResolvedValue([]),
 			set: vi.fn().mockResolvedValue(null),
+			remove: vi.fn().mockResolvedValue(undefined),
 		},
 		runtime: {
 			sendMessage: vi.fn().mockResolvedValue(false),
@@ -32,6 +36,9 @@ function makeBrowserApi(): BrowserApi {
 		},
 		management: {
 			get: vi.fn().mockRejectedValue(new Error('not installed')),
+		},
+		browsingData: {
+			remove: vi.fn().mockResolvedValue(undefined),
 		},
 	}
 }

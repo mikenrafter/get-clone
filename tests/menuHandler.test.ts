@@ -46,6 +46,9 @@ function makeBrowserApi(): BrowserApi {
 		management: {
 			get: vi.fn().mockRejectedValue(new Error('not installed')),
 		},
+		browsingData: {
+			remove: vi.fn().mockResolvedValue(undefined),
+		},
 	}
 }
 

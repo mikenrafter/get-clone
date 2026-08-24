@@ -1,12 +1,22 @@
 import type { BrowserApi, ContextualIdentity, MenusOnClickInfo, Tab } from '../models'
 import type { TcLayer } from './tcLayer'
 import type { CloneRuntime } from './cloneRuntime'
-import { MENU_PRIMARY, MENU_SECONDARY, NEW_TEMP_CONTAINER_SENTINEL } from '../constants'
+import type { ClearRuntime } from './clearRuntime'
+import {
+	MENU_PRIMARY,
+	MENU_SECONDARY,
+	MENU_CLEAR,
+	MENU_RESTRICTED,
+	NEW_TEMP_CONTAINER_SENTINEL,
+	QUARANTINED_DOMAINS,
+	PRIVILEGED_URL_SCHEMES,
+} from '../constants'
 
 export interface MenuHandlerDeps {
 	readonly browserApi: BrowserApi
 	readonly tcLayer: TcLayer
 	readonly cloneRuntime: CloneRuntime
+	readonly clearRuntime: ClearRuntime
 }
 
 export interface MenuHandler {
@@ -19,6 +29,23 @@ export class MenuHandlerImpl implements MenuHandler {
 
 	async buildMenus(tab: Tab): Promise<void> {
 		const { browserApi, tcLayer } = this.deps
+
+		if (tab.url !== undefined && PRIVILEGED_URL_SCHEMES.some(scheme => tab.url!.startsWith(scheme))) {
+			await browserApi.menus.removeAll()
+			await browserApi.menus.refresh()
+			return
+		}
+
+		if (tab.url !== undefined && QUARANTINED_DOMAINS.includes(new URL(tab.url).hostname as (typeof QUARANTINED_DOMAINS)[number])) {
+			await browserApi.menus.removeAll()
+			await browserApi.menus.create({
+				id: MENU_RESTRICTED,
+				title: "Get Clone is restricted here — enable 'Run on sites with restrictions' in about:addons",
+				contexts: ['tab'],
+			})
+			await browserApi.menus.refresh()
+			return
+		}
 
 		await browserApi.menus.removeAll()
 
@@ -42,6 +69,7 @@ export class MenuHandlerImpl implements MenuHandler {
 			for (const container of permanentContainers) {
 				await this.createContainerItem(MENU_PRIMARY, container, undefined)
 			}
+			await browserApi.menus.create({ id: MENU_CLEAR, title: 'Clear Site Data for This Container', contexts: ['tab'] })
 			await browserApi.menus.refresh()
 			return
 		}
@@ -54,6 +82,12 @@ export class MenuHandlerImpl implements MenuHandler {
 		const secondaryTitle = activeIsTemporary ? 'Clone to Temporary Container' : 'Clone to Permanent Container'
 
 		await browserApi.menus.create({ id: MENU_PRIMARY, title: primaryTitle, contexts: ['tab'] })
+
+		await browserApi.menus.create({ id: MENU_SECONDARY, parentId: MENU_PRIMARY, title: secondaryTitle, contexts: ['tab'] })
+		for (const container of secondaryContainers) {
+			await this.createContainerItem(MENU_SECONDARY, container, MENU_SECONDARY)
+		}
+
 		for (const container of primaryContainers) {
 			await this.createContainerItem(MENU_PRIMARY, container, MENU_PRIMARY)
 		}
@@ -65,18 +99,26 @@ export class MenuHandlerImpl implements MenuHandler {
 			contexts: ['tab'],
 		})
 
-		await browserApi.menus.create({ id: MENU_SECONDARY, title: secondaryTitle, contexts: ['tab'] })
-		for (const container of secondaryContainers) {
-			await this.createContainerItem(MENU_SECONDARY, container, MENU_SECONDARY)
-		}
+		await browserApi.menus.create({ id: MENU_CLEAR, title: 'Clear Site Data for This Container', contexts: ['tab'] })
 
 		await browserApi.menus.refresh()
 	}
 
 	async handleClick(info: MenusOnClickInfo, tab: Tab): Promise<void> {
-		const { cloneRuntime } = this.deps
+		const { cloneRuntime, clearRuntime, browserApi } = this.deps
 
 		const menuItemId = String(info.menuItemId)
+
+		if (menuItemId === MENU_CLEAR) {
+			await clearRuntime.clearDomain(tab)
+			return
+		}
+
+		if (menuItemId === MENU_RESTRICTED) {
+			await browserApi.tabs.create({ url: 'about:addons' })
+			return
+		}
+
 		let remainder: string
 		if (menuItemId.startsWith(`${MENU_PRIMARY}-`)) {
 			remainder = menuItemId.slice(`${MENU_PRIMARY}-`.length)

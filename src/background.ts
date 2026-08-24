@@ -1,5 +1,6 @@
 import { TcLayerImpl } from './background/tcLayer'
 import { CloneRuntimeImpl } from './background/cloneRuntime'
+import { ClearRuntimeImpl } from './background/clearRuntime'
 import { MenuHandlerImpl } from './background/menuHandler'
 import type { BrowserApi } from './models'
 
@@ -7,7 +8,8 @@ const browserApi = (globalThis as unknown as { browser: BrowserApi }).browser
 
 const tcLayer = new TcLayerImpl({ browserApi })
 const cloneRuntime = new CloneRuntimeImpl({ browserApi, tcLayer })
-const menuHandler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime })
+const clearRuntime = new ClearRuntimeImpl({ browserApi })
+const menuHandler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 
 async function initialize(): Promise<void> {
 	await tcLayer.initialize()

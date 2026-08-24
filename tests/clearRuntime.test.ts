@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ClearRuntimeImpl, getBaseDomain } from '../src/background/clearRuntime'
-import type { BrowserApi, Cookie, Tab } from '../src/models'
+import type { BrowserApi, Tab } from '../src/models'
 
 function makeBrowserApi(): BrowserApi {
 	return {
@@ -27,6 +27,9 @@ function makeBrowserApi(): BrowserApi {
 		cookies: {
 			getAll: vi.fn().mockResolvedValue([]),
 			set: vi.fn().mockResolvedValue(null),
+			remove: vi.fn().mockResolvedValue(undefined),
+		},
+		browsingData: {
 			remove: vi.fn().mockResolvedValue(undefined),
 		},
 		runtime: {
@@ -85,31 +88,14 @@ const allTabsFixture: Tab[] = [
 	{ id: 15, url: 'https://evil-example.com/', index: 5, cookieStoreId: 'firefox-container-1' }, // same container, look-alike domain (not a real subdomain)
 ]
 
-const allCookiesFixture: Cookie[] = [
-	{ name: 'a', value: '1', domain: 'example.com', path: '/', secure: true, httpOnly: false, sameSite: 'lax', storeId: 'firefox-container-1' }, // exact match
-	{ name: 'b', value: '2', domain: '.sub.example.com', path: '/', secure: false, httpOnly: false, sameSite: 'lax', storeId: 'firefox-container-1' }, // leading-dot subdomain match
-	{ name: 'c', value: '3', domain: 'unrelated.org', path: '/', secure: true, httpOnly: false, sameSite: 'lax', storeId: 'firefox-container-1' }, // unrelated domain
-	{ name: 'd', value: '4', domain: 'example.com', path: '/', secure: true, httpOnly: false, sameSite: 'lax', storeId: 'firefox-container-2' }, // different container
-	{ name: 'e', value: '5', domain: 'evil-example.com', path: '/', secure: true, httpOnly: false, sameSite: 'lax', storeId: 'firefox-container-1' }, // look-alike domain, same container
-]
-
-describe('ClearRuntimeImpl.clearDomain', () => {
+describe('ClearRuntimeImpl.clearDomain — matching tabs present', () => {
 	let browserApi: BrowserApi
-	let nextCreatedTabId: number
 
 	beforeEach(() => {
 		browserApi = makeBrowserApi()
-		nextCreatedTabId = 200
 		;(browserApi.tabs.query as ReturnType<typeof vi.fn>).mockImplementation(
 			async ({ cookieStoreId }: { cookieStoreId?: string }) => allTabsFixture.filter(t => t.cookieStoreId === cookieStoreId),
 		)
-		;(browserApi.cookies.getAll as ReturnType<typeof vi.fn>).mockImplementation(
-			async ({ storeId }: { storeId: string }) => allCookiesFixture.filter(c => c.storeId === storeId),
-		)
-		;(browserApi.tabs.create as ReturnType<typeof vi.fn>).mockImplementation(async () => {
-			const id = nextCreatedTabId++
-			return { id, index: 0 }
-		})
 	})
 
 	it('queries tabs scoped to the tab-triggering container', async () => {
@@ -130,119 +116,81 @@ describe('ClearRuntimeImpl.clearDomain', () => {
 		expect(removedIds).not.toContain(15) // look-alike domain, not an actual subdomain
 	})
 
-	it('closes matched tabs before clearing any cookies and before spinning up any storage-clearing tab', async () => {
+	it('closes all matched tabs before calling browsingData.remove', async () => {
 		const runtime = new ClearRuntimeImpl({ browserApi })
 		await runtime.clearDomain(sourceTab)
 
 		const removeMock = browserApi.tabs.remove as ReturnType<typeof vi.fn>
-		const matchedTabIds = [10, 11, 12]
-		const matchedCloseOrders = removeMock.mock.calls
-			.map((args, idx) => ({ tabId: args[0] as number, order: removeMock.mock.invocationCallOrder[idx]! }))
-			.filter(c => matchedTabIds.includes(c.tabId))
-			.map(c => c.order)
+		const browsingDataRemoveMock = browserApi.browsingData.remove as ReturnType<typeof vi.fn>
 
-		expect(matchedCloseOrders).toHaveLength(3)
-		const lastMatchedCloseOrder = Math.max(...matchedCloseOrders)
+		expect(removeMock.mock.calls.length).toBeGreaterThan(0)
+		expect(browsingDataRemoveMock).toHaveBeenCalledTimes(1)
 
-		const cookiesRemoveMock = browserApi.cookies.remove as ReturnType<typeof vi.fn>
-		expect(cookiesRemoveMock.mock.calls.length).toBeGreaterThan(0)
-		const firstCookieRemoveOrder = cookiesRemoveMock.mock.invocationCallOrder[0]!
+		const lastTabRemoveOrder = Math.max(...removeMock.mock.invocationCallOrder)
+		const browsingDataRemoveOrder = browsingDataRemoveMock.mock.invocationCallOrder[0]!
 
-		const createMock = browserApi.tabs.create as ReturnType<typeof vi.fn>
-		expect(createMock.mock.calls.length).toBeGreaterThan(0)
-		const firstStorageCreateOrder = createMock.mock.invocationCallOrder[0]!
-
-		expect(lastMatchedCloseOrder).toBeLessThan(firstCookieRemoveOrder)
-		expect(lastMatchedCloseOrder).toBeLessThan(firstStorageCreateOrder)
+		expect(lastTabRemoveOrder).toBeLessThan(browsingDataRemoveOrder)
 	})
 
-	it('clears only cookies whose domain matches the base domain or a subdomain of it', async () => {
+	it('calls browsingData.remove exactly once with the distinct exact hostnames of matched tabs', async () => {
 		const runtime = new ClearRuntimeImpl({ browserApi })
 		await runtime.clearDomain(sourceTab)
 
-		const removedCookieNames = (browserApi.cookies.remove as ReturnType<typeof vi.fn>).mock.calls.map(c => (c[0] as { name: string }).name)
-		expect(removedCookieNames.sort()).toEqual(['a', 'b'])
+		const browsingDataRemoveMock = browserApi.browsingData.remove as ReturnType<typeof vi.fn>
+		expect(browsingDataRemoveMock).toHaveBeenCalledTimes(1)
+
+		const [options, dataTypes] = browsingDataRemoveMock.mock.calls[0]! as [
+			{ cookieStoreId?: string; hostnames?: string[] },
+			{ cookies?: boolean; localStorage?: boolean; indexedDB?: boolean },
+		]
+
+		expect(options.cookieStoreId).toBe('firefox-container-1')
+		// tabs 11 and 12 share hostname sub.example.com -> deduped to a single entry
+		expect(options.hostnames!.slice().sort()).toEqual(['example.com', 'sub.example.com'])
+		expect(dataTypes).toEqual({ cookies: true, localStorage: true, indexedDB: true })
 	})
 
-	it('builds the cookie removal url the same way cloneRuntime does (scheme by secure flag, domain, path)', async () => {
-		const runtime = new ClearRuntimeImpl({ browserApi })
-		await runtime.clearDomain(sourceTab)
-
-		const calls = (browserApi.cookies.remove as ReturnType<typeof vi.fn>).mock.calls.map(c => c[0] as { url: string; name: string; storeId: string })
-		const cookieA = calls.find(c => c.name === 'a')
-		const cookieB = calls.find(c => c.name === 'b')
-
-		expect(cookieA).toEqual({ url: 'https://example.com/', name: 'a', storeId: 'firefox-container-1' })
-		expect(cookieB).toEqual({ url: 'http://sub.example.com/', name: 'b', storeId: 'firefox-container-1' })
-	})
-
-	it('spins up exactly one storage-clearing tab per distinct matched hostname, deduping tabs that share an origin', async () => {
-		const runtime = new ClearRuntimeImpl({ browserApi })
-		await runtime.clearDomain(sourceTab)
-
-		// tabs 11 and 12 share the hostname sub.example.com, so this must collapse to a single cycle for it,
-		// alongside a single cycle for example.com (from tab 10) -> two cycles total, not three.
-		expect(browserApi.tabs.create).toHaveBeenCalledTimes(2)
-
-		const createCalls = (browserApi.tabs.create as ReturnType<typeof vi.fn>).mock.calls.map(
-			c => c[0] as { cookieStoreId?: string; url?: string; active?: boolean },
+	it('does not include the base domain in hostnames unless it was itself an exact matched hostname', async () => {
+		// Trigger from a bare-domain tab (no subdomain), so the only matched hostname is the base domain itself.
+		const bareTab: Tab = { id: 2, url: 'https://example.com/other', index: 0, cookieStoreId: 'firefox-container-2', windowId: 1 }
+		;(browserApi.tabs.query as ReturnType<typeof vi.fn>).mockImplementation(
+			async ({ cookieStoreId }: { cookieStoreId?: string }) => allTabsFixture.filter(t => t.cookieStoreId === cookieStoreId),
 		)
-		expect(createCalls).toEqual(
-			expect.arrayContaining([
-				{ cookieStoreId: 'firefox-container-1', url: 'https://example.com', active: false },
-				{ cookieStoreId: 'firefox-container-1', url: 'https://sub.example.com', active: false },
-			]),
-		)
-	})
 
-	it('runs executeScript against each created storage-clearing tab, then removes it', async () => {
 		const runtime = new ClearRuntimeImpl({ browserApi })
-		await runtime.clearDomain(sourceTab)
+		await runtime.clearDomain(bareTab)
 
-		const createdIds = [200, 201]
-
-		for (const id of createdIds) {
-			const executeScriptCall = (browserApi.tabs.executeScript as ReturnType<typeof vi.fn>).mock.calls.find(c => c[0] === id)
-			expect(executeScriptCall).toBeDefined()
-			const details = executeScriptCall![1] as { code: string }
-			expect(typeof details.code).toBe('string')
-			expect(details.code.toLowerCase()).toContain('localstorage')
-			expect(details.code.toLowerCase()).toContain('sessionstorage')
-			expect(details.code.toLowerCase()).toContain('indexeddb')
-
-			const removeCall = (browserApi.tabs.remove as ReturnType<typeof vi.fn>).mock.calls.find(c => c[0] === id)
-			expect(removeCall).toBeDefined()
-		}
+		const browsingDataRemoveMock = browserApi.browsingData.remove as ReturnType<typeof vi.fn>
+		const [options] = browsingDataRemoveMock.mock.calls[0]! as [{ hostnames?: string[] }]
+		// container-2 only has tab 14 (example.com) matching -> exact hostname list is just ['example.com']
+		expect(options.hostnames).toEqual(['example.com'])
 	})
+})
 
-	it('executes the storage-clearing script before removing the scratch tab, for each hostname', async () => {
-		const runtime = new ClearRuntimeImpl({ browserApi })
-		await runtime.clearDomain(sourceTab)
+describe('ClearRuntimeImpl.clearDomain — no matching tabs (fallback)', () => {
+	let browserApi: BrowserApi
 
-		const executeScriptMock = browserApi.tabs.executeScript as ReturnType<typeof vi.fn>
-		const removeMock = browserApi.tabs.remove as ReturnType<typeof vi.fn>
-
-		for (const id of [200, 201]) {
-			const execIdx = executeScriptMock.mock.calls.findIndex(c => c[0] === id)
-			const removeIdx = removeMock.mock.calls.findIndex(c => c[0] === id)
-			expect(execIdx).toBeGreaterThanOrEqual(0)
-			expect(removeIdx).toBeGreaterThanOrEqual(0)
-			const execOrder = executeScriptMock.mock.invocationCallOrder[execIdx]!
-			const removeOrder = removeMock.mock.invocationCallOrder[removeIdx]!
-			expect(execOrder).toBeLessThan(removeOrder)
-		}
-	})
-
-	it('does nothing beyond the domain computation when no tabs or cookies match', async () => {
+	beforeEach(() => {
+		browserApi = makeBrowserApi()
 		;(browserApi.tabs.query as ReturnType<typeof vi.fn>).mockResolvedValue([])
-		;(browserApi.cookies.getAll as ReturnType<typeof vi.fn>).mockResolvedValue([])
+	})
 
+	it('does not call tabs.remove when nothing matched', async () => {
 		const runtime = new ClearRuntimeImpl({ browserApi })
 		await runtime.clearDomain(sourceTab)
 
 		expect(browserApi.tabs.remove).not.toHaveBeenCalled()
-		expect(browserApi.cookies.remove).not.toHaveBeenCalled()
-		expect(browserApi.tabs.create).not.toHaveBeenCalled()
-		expect(browserApi.tabs.executeScript).not.toHaveBeenCalled()
+	})
+
+	it('falls back to clearing the base domain itself via browsingData.remove', async () => {
+		const runtime = new ClearRuntimeImpl({ browserApi })
+		await runtime.clearDomain(sourceTab)
+
+		const browsingDataRemoveMock = browserApi.browsingData.remove as ReturnType<typeof vi.fn>
+		expect(browsingDataRemoveMock).toHaveBeenCalledTimes(1)
+		expect(browsingDataRemoveMock).toHaveBeenCalledWith(
+			{ cookieStoreId: 'firefox-container-1', hostnames: ['example.com'] },
+			{ cookies: true, localStorage: true, indexedDB: true },
+		)
 	})
 })
