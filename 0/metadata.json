@@ -1,0 +1,97 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "01M0RJF4BMGAZF0FA14A3HQWKN",
+  "session_id": "f95b44ff-d79b-4407-a800-d8da37f3e1e5",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-24T00:24:34.13994739Z",
+  "branch": "main",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "flake.lock",
+    "package-lock.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5",
+  "turn_id": "29a091e272dc",
+  "checkpoint_transcript_start": 312,
+  "transcript_lines_at_start": 312,
+  "compact_transcript_start": 80,
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 4034,
+    "cache_read_tokens": 590538,
+    "output_tokens": 1078,
+    "api_call_count": 4
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "prompt-skill-claude-code-residual-tdd-implement-2026-08-24T00:22:57.572935292Z",
+      "event_type": "prompt_invocation",
+      "skill": {
+        "name": "residual-tdd-implement"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "prompt_slash_command",
+        "confidence": "explicit"
+      },
+      "turn_id": "29a091e272dc",
+      "timestamp": "2026-08-24T00:22:57.572935292Z",
+      "native": {
+        "command": "/residual-tdd-implement"
+      },
+      "collapse": {
+        "target": "user_message",
+        "label": "/residual-tdd-implement",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01DFWgpDfDbDLPZNkUi59enG",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "residual-naive-draft"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "29a091e272dc",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 45,
+        "end": 46,
+        "entry_ids": [
+          "9af492e6-086b-4b12-9649-fd486a278b52"
+        ],
+        "tool_use_id": "toolu_01DFWgpDfDbDLPZNkUi59enG"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01DFWgpDfDbDLPZNkUi59enG"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: residual-naive-draft",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-24T00:24:34.093899806Z",
+    "agent_lines": 61,
+    "agent_removed": 42,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 61,
+    "total_lines_changed": 103,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
