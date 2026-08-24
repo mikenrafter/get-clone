@@ -1,0 +1,21 @@
+{
+  "name": "get-clone",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clone a browser tab's session into another container without touching the source tab",
+  "scripts": {
+    "build": "esbuild src/background.ts --bundle --platform=browser --format=iife --target=firefox115 --outfile=src/background.js",
+    "build:firefox": "npm run build && web-ext build --source-dir src --artifacts-dir dist --overwrite-dest --ignore-files '**/*.ts'",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/firefox-webext-browser": "^120.0.0",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.0",
+    "jsdom": "^29.1.1",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.4",
+    "web-ext": "^8.9.0"
+  }
+}
