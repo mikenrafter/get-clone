@@ -1,0 +1,34 @@
+Like permanent-container tabs, I don't want 2 submenus but instead 1 submenu and 1 top-level menu for the primary, where the submenu is the secondary. To compliment this extension, there needs to be another button in the menu that instead fully clears the data for that domain. It first closes all tabs with that container+domain combo (need to handle subdomains) and then clears everything. Maybe the order needs reversing? idk, let's see what works. Now, for sites that are localhost (my t3code instance right here) I need the extension to appropriately describe how it's incapable of doing so w/o further effort from the user. In order to do this, the extension will add a bookmarklet to the front of the bookmarks bar. This bookmarklet will have a javascript: url and it will merely display all data in a z-index always on top + position:absolute html5 modal w/ an easy copy button. At the same time the temporary bookmarklet is made, the extension will launch a simple page where the user pastes in the content, then presses OK. The clear version should be relatively simple. No manual data transfer in those cases would be needed.
+
+This would happen anytime the extension is informed that it's unable to access the site. This would be localhost sites and mozilla addon store sites. We should refuse to act on settings pages as those are genuinely out of scope and require a degree of consent from the user they needn't give up. We need to check the URL and behave in this manner when these issues arise.
+
+stressor: mozilla prohibits the user from accessing these pages, outcome: inform the user of the danger they're engaging w/ and give them an alternate route.
+purpose: user should be able to clone and clear all data for all sites in all containers, outcome: work around limitations with clear user consent
+attractor +/- --> browser safeguards (+) allow the user to do what they wish to do, (-) prevent the user from doing what they wish.
+
+---
+
+Like permanent-container-tabs, I don't want 2 submenus but instead 1 submenu and 1 top-level menu for the primary, where the submenu is the secondary. To compliment this extension, there needs to be another button in the menu that instead fully clears the data for that domain. It first closes all tabs with that container+domain combo (need to handle subdomains) and then clears everything. Maybe the order needs reversing? idk, let's see what works. Now, for sites that are localhost (my t3code instance right here) I need the extension to appropriately describe how it's incapable of doing so w/o further effort from the user. In order to do this, the extension will add a bookmarklet to the front of the bookmarks bar. This bookmarklet will have a javascript: url and it will merely display all data in a z-index always on top + position:absolute html5 modal w/ an easy copy button. At the same time the temporary bookmarklet is made, the extension will launch a simple page where the user pastes in the content, then presses OK. The clear version should be relatively simple. No manual data transfer in those cases would be needed.
+
+This would happen anytime the extension is informed that it's unable to access the site. This would be localhost sites and protected-by-default mozilla sites. We should refuse to act on settings pages as those are genuinely out of scope and require a degree of consent from the user they needn't give up. We need to check the URL and behave in this manner when these issues arise. It's imperative that we inform the user of the nature of this consent they're granting us. Our privacy policy is basically "we move data locally on your machine and that's it". We should link the user to some resources regarding why we need a workaround in these scenarios.
+
+stressor: mozilla prohibits the user from accessing these pages, outcome: inform the user of the danger they're engaging w/ and give them an alternate route.
+purpose: user should be able to clone and clear all data for all sites in all containers, outcome: work around limitations with clear user consent
+attractor +/- --> browser safeguards (+) allow the user to do what they wish to do, (-) prevent the user from doing what they wish.
+
+---
+
+I forgot to clarify that there will be 3 bookmarklets & addon popup combos:
+- clear domain data + no popup (the other tabs will have already been closed, the bookmarklet should close the page...)
+- copy domain data + paste & confirm popup
+- paste domain data + confirm paste popup (handles discards)
+
+Remember, all bookmarklets here should be added in a consistent location and they need to be ephemeral.
+
+---
+
+Confirmed, begin.
+
+I would also like for you to point me to the URL for the issue #3 illustrates. The MDN one. Do that, then begin.
+
+As usual, /residual-tdd-implement.
