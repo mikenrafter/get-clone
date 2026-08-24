@@ -57,6 +57,7 @@ const sourceCookie: Cookie = {
 	name: 'session',
 	value: 'abc123',
 	domain: 'example.com',
+	hostOnly: false,
 	path: '/',
 	secure: true,
 	httpOnly: true,
@@ -160,6 +161,50 @@ describe('CloneRuntimeImpl.cloneToContainer', () => {
 		await listener(99, { status: 'loading' }, { id: 99, index: 1, cookieStoreId: 'firefox-container-2' })
 
 		expect(browserApi.tabs.discard).not.toHaveBeenCalled()
+	})
+
+	it('omits the domain field for host-only cookies, relying on url instead', async () => {
+		const hostOnlyCookie: Cookie = {
+			name: 'session',
+			value: 'abc123',
+			domain: 'localhost',
+			hostOnly: true,
+			path: '/',
+			secure: false,
+			httpOnly: true,
+			sameSite: 'lax',
+			storeId: 'firefox-container-1',
+		}
+		;(browserApi.cookies.getAll as ReturnType<typeof vi.fn>).mockResolvedValue([hostOnlyCookie])
+
+		const runtime = new CloneRuntimeImpl({ browserApi, tcLayer })
+		await runtime.cloneToContainer(sourceTab, 'firefox-container-2')
+
+		const setCall = (browserApi.cookies.set as ReturnType<typeof vi.fn>).mock.calls[0]![0]
+		expect(setCall.domain).toBeUndefined()
+		expect(setCall.url).toBe('http://localhost/')
+	})
+
+	it('keeps the domain field for domain cookies (non-host-only)', async () => {
+		const runtime = new CloneRuntimeImpl({ browserApi, tcLayer })
+		await runtime.cloneToContainer(sourceTab, 'firefox-container-2')
+
+		const setCall = (browserApi.cookies.set as ReturnType<typeof vi.fn>).mock.calls[0]![0]
+		expect(setCall.domain).toBe('example.com')
+	})
+
+	it('continues copying remaining cookies and still creates the clone tab when one cookie fails to set', async () => {
+		const secondCookie: Cookie = { ...sourceCookie, name: 'other', value: 'xyz' }
+		;(browserApi.cookies.getAll as ReturnType<typeof vi.fn>).mockResolvedValue([sourceCookie, secondCookie])
+		;(browserApi.cookies.set as ReturnType<typeof vi.fn>)
+			.mockRejectedValueOnce(new Error('Invalid domain: ".localhost"'))
+			.mockResolvedValueOnce(null)
+
+		const runtime = new CloneRuntimeImpl({ browserApi, tcLayer })
+		await runtime.cloneToContainer(sourceTab, 'firefox-container-2')
+
+		expect(browserApi.cookies.set).toHaveBeenCalledTimes(2)
+		expect(browserApi.tabs.create).toHaveBeenCalledTimes(1)
 	})
 
 	it('never calls tabs.remove or tabs.update on the source tab (discard-only)', async () => {

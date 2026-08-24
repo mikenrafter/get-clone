@@ -19,7 +19,10 @@ function cookieToSetDetails(cookie: Cookie, storeId: string): CookieSetDetails {
 		url,
 		name: cookie.name,
 		value: cookie.value,
-		domain: cookie.domain,
+		// Host-only cookies must not carry an explicit domain — Firefox derives it from `url`.
+		// Passing one back (e.g. a leading-dot domain on a single-label host like "localhost")
+		// can fail cookies.set validation even though the original cookie was valid.
+		...(cookie.hostOnly ? {} : { domain: cookie.domain }),
 		path: cookie.path,
 		secure: cookie.secure,
 		httpOnly: cookie.httpOnly,
@@ -69,7 +72,13 @@ export class CloneRuntimeImpl implements CloneRuntime {
 
 		const cookies = await browserApi.cookies.getAll({ storeId: sourceTab.cookieStoreId ?? '' })
 		for (const cookie of cookies) {
-			await browserApi.cookies.set(cookieToSetDetails(cookie, targetCookieStoreId))
+			try {
+				await browserApi.cookies.set(cookieToSetDetails(cookie, targetCookieStoreId))
+			} catch (error) {
+				// One cookie's own quirks (e.g. Firefox rejecting a leading-dot domain on a
+				// single-label host) shouldn't abort the clone for every other cookie.
+				console.warn(`get-clone: failed to copy cookie "${cookie.name}" for ${cookie.domain}`, error)
+			}
 		}
 	}
 
