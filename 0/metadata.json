@@ -1,0 +1,151 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "01M0RK1FZNZ4CBAPSZ6B05X6XW",
+  "session_id": "f95b44ff-d79b-4407-a800-d8da37f3e1e5",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-24T00:34:34.932896896Z",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "save_step_count": 3,
+  "files_touched": [
+    "src/background/cloneRuntime.ts",
+    "src/background/menuHandler.ts",
+    "src/background/tcLayer.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5",
+  "turn_id": "25852254d142",
+  "checkpoint_transcript_start": 357,
+  "transcript_lines_at_start": 357,
+  "compact_transcript_start": 90,
+  "token_usage": {
+    "input_tokens": 58,
+    "cache_creation_tokens": 39841,
+    "cache_read_tokens": 5846017,
+    "output_tokens": 21362,
+    "api_call_count": 29,
+    "subagent_tokens": {
+      "input_tokens": 66,
+      "cache_creation_tokens": 139316,
+      "cache_read_tokens": 973289,
+      "output_tokens": 31647,
+      "api_call_count": 33
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "prompt-skill-claude-code-residual-tdd-implement-2026-08-24T00:22:57.572935292Z",
+      "event_type": "prompt_invocation",
+      "skill": {
+        "name": "residual-tdd-implement"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "prompt_slash_command",
+        "confidence": "explicit"
+      },
+      "turn_id": "29a091e272dc",
+      "timestamp": "2026-08-24T00:22:57.572935292Z",
+      "native": {
+        "command": "/residual-tdd-implement"
+      },
+      "collapse": {
+        "target": "user_message",
+        "label": "/residual-tdd-implement",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01DFWgpDfDbDLPZNkUi59enG",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "residual-naive-draft"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "25852254d142",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 45,
+        "end": 46,
+        "entry_ids": [
+          "9af492e6-086b-4b12-9649-fd486a278b52"
+        ],
+        "tool_use_id": "toolu_01DFWgpDfDbDLPZNkUi59enG"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01DFWgpDfDbDLPZNkUi59enG"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: residual-naive-draft",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-24T00:34:34.847002567Z",
+    "agent_lines": 119,
+    "agent_removed": 0,
+    "human_added": 173,
+    "human_modified": 16,
+    "human_removed": 0,
+    "total_committed": 297,
+    "total_lines_changed": 308,
+    "agent_percentage": 38.63636363636363,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 2,
+      "user_lines_removed": 1,
+      "agent_lines_added": 138,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "src/background/cloneRuntime.ts": 2
+      },
+      "user_removed_per_file": {
+        "src/background/cloneRuntime.ts": 1
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 98,
+      "user_lines_removed": 0,
+      "agent_lines_added": 139,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "src/background/menuHandler.ts": 98
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 13,
+      "user_lines_removed": 4,
+      "agent_lines_added": 237,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "src/background/cloneRuntime.ts": 13
+      },
+      "user_removed_per_file": {
+        "src/background/cloneRuntime.ts": 4
+      }
+    }
+  ]
+}
