@@ -1,0 +1,25 @@
+Pull the most recent transcript (claude) for this project. Then:
+
+Well... that was weird... it just worked on a localhost page...
+
+Also, the user flow here is a bit lacking... The "restricted here" message is unintuitive and lengthy. Instead:
+
+each click should try accessing the domain. If it fails, then it should open the informational page (also, the about:addons link is broken... make that a real link please). But if it succeeds, then it did as the user asked... no harm, no foul.
+
+by "each click" I mean - don't have a top-level selectable item like that, instead have the normal menu. If it fails - and only then, should this message come up. Don't gate these failures by a predefined list. Different FF forks handle different domains differently.
+
+---
+
+Pull the most recent transcript (claude) for this project. Then:
+
+Well... that was weird... it just worked on a localhost page...
+
+Also, the user flow here is a bit lacking... The "restricted here" message is unintuitive and lengthy. Instead:
+
+each click should try accessing the domain. If it fails, then it should open the informational page (also, the about:addons link is broken... make that a real link please). But if it succeeds, then it did as the user asked... no harm, no foul.
+
+by "each click" I mean - don't have a top-level selectable item like that, instead have the normal menu. If it fails - and only then, should this message come up. Don't gate these failures by a predefined list. Different FF forks handle different domains differently.
+
+---
+
+continue
