@@ -1,0 +1,167 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "01M0RJDWGD2EMS8B7T07KP5FM4",
+  "session_id": "f95b44ff-d79b-4407-a800-d8da37f3e1e5",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-24T00:23:52.239733238Z",
+  "branch": "main",
+  "checkpoints_count": 5,
+  "save_step_count": 1,
+  "files_touched": [
+    ".github/copilot/residual-atam.md",
+    ".github/copilot/residual-fmea.md",
+    ".github/copilot/residual-integrate.md",
+    ".github/copilot/residual-naive-draft.md",
+    ".github/copilot/residual-purpose-walk.md",
+    ".github/copilot/residual-stressor-walk.md",
+    ".github/copilot/residual-tdd-implement.md",
+    ".residual/skills/atam.md",
+    ".residual/skills/fmea.md",
+    ".residual/skills/integrate.md",
+    ".residual/skills/naive-draft.md",
+    ".residual/skills/purpose-walk.md",
+    ".residual/skills/stressor-walk.md",
+    ".residual/skills/tdd-implement.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5",
+  "turn_id": "29a091e272dc",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 98,
+    "cache_creation_tokens": 213103,
+    "cache_read_tokens": 4302768,
+    "output_tokens": 54480,
+    "api_call_count": 49
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "prompt-skill-claude-code-residual-tdd-implement-2026-08-24T00:22:57.572935292Z",
+      "event_type": "prompt_invocation",
+      "skill": {
+        "name": "residual-tdd-implement"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "prompt_slash_command",
+        "confidence": "explicit"
+      },
+      "turn_id": "29a091e272dc",
+      "timestamp": "2026-08-24T00:22:57.572935292Z",
+      "native": {
+        "command": "/residual-tdd-implement"
+      },
+      "collapse": {
+        "target": "user_message",
+        "label": "/residual-tdd-implement",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01DFWgpDfDbDLPZNkUi59enG",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "residual-naive-draft"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "29a091e272dc",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 45,
+        "end": 46,
+        "entry_ids": [
+          "9af492e6-086b-4b12-9649-fd486a278b52"
+        ],
+        "tool_use_id": "toolu_01DFWgpDfDbDLPZNkUi59enG"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01DFWgpDfDbDLPZNkUi59enG"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: residual-naive-draft",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-24T00:23:52.189095642Z",
+    "agent_lines": 182,
+    "agent_removed": 0,
+    "human_added": 7682,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 7864,
+    "total_lines_changed": 7864,
+    "agent_percentage": 2.314343845371312,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 40,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".cursor/hooks.json": 40
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 7811,
+      "user_lines_removed": 0,
+      "agent_lines_added": 182,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/commands/residual-atam.md": 13,
+        ".claude/commands/residual-fmea.md": 13,
+        ".claude/commands/residual-integrate.md": 13,
+        ".claude/commands/residual-naive-draft.md": 13,
+        ".claude/commands/residual-purpose-walk.md": 13,
+        ".claude/commands/residual-stressor-walk.md": 13,
+        ".claude/commands/residual-tdd-implement.md": 13,
+        ".cursor/hooks.json": 40,
+        ".cursor/rules/residual-atam.mdc": 13,
+        ".cursor/rules/residual-fmea.mdc": 13,
+        ".cursor/rules/residual-integrate.mdc": 13,
+        ".cursor/rules/residual-naive-draft.mdc": 13,
+        ".cursor/rules/residual-purpose-walk.mdc": 13,
+        ".cursor/rules/residual-stressor-walk.mdc": 13,
+        ".cursor/rules/residual-tdd-implement.mdc": 13,
+        ".gitignore": 5,
+        "package-lock.json": 6785,
+        "package.json": 21,
+        "src/constants.ts": 16,
+        "src/icons/briefcase.svg": 27,
+        "src/icons/cart.svg": 29,
+        "src/icons/chill.svg": 30,
+        "src/icons/circle.svg": 24,
+        "src/icons/dollar.svg": 30,
+        "src/icons/fence.svg": 23,
+        "src/icons/fingerprint.svg": 24,
+        "src/icons/food.svg": 26,
+        "src/icons/fruit.svg": 26,
+        "src/icons/gift.svg": 28,
+        "src/icons/pet.svg": 28,
+        "src/icons/temp-container.svg": 93,
+        "src/icons/tree.svg": 26,
+        "src/icons/vacation.svg": 36,
+        "src/manifest.json": 27,
+        "src/models.ts": 129,
+        "tests/tcLayer.test.ts": 129,
+        "tsconfig.json": 16,
+        "vitest.config.ts": 11
+      }
+    }
+  ]
+}

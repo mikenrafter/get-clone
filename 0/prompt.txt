@@ -1,0 +1,13 @@
+Look at the most recent t3/Claude chat (failed on mv get-revert get-clone, it seems t3 didn't like that lol) and resume it here. Is that agent still running? Just detached from t3? If so, kindly as it to stop and handoff to you.
+
+---
+
+ask*
+
+---
+
+yes, pick back up. Ensure you run the naive-draft skill correctly
+
+---
+
+Yes, that matches. Install the residual skills for all agents in the repo, then add those base forces and get to a point where you actually craft a version of the project in the naive draft form with the naive draft methodology.
