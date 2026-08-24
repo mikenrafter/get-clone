@@ -10,6 +10,8 @@ function makeBrowserApi(): BrowserApi {
 		menus: {
 			create: vi.fn().mockResolvedValue(undefined),
 			removeAll: vi.fn().mockResolvedValue(undefined),
+			refresh: vi.fn().mockResolvedValue(undefined),
+			onShown: { addListener: vi.fn() },
 			onClicked: { addListener: vi.fn() },
 		},
 		tabs: {
@@ -129,6 +131,14 @@ describe('MenuHandlerImpl.buildMenus — TC not present', () => {
 		const item = calls.find(c => c.id === `${MENU_PRIMARY}-firefox-container-2`)
 		expect(item).toBeDefined()
 		expect(item!.icons).toEqual({ 16: 'icons/fingerprint.svg#green' })
+	})
+
+	it('calls menus.refresh() after rebuilding so an already-open menu picks up the new items', async () => {
+		const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime })
+		await handler.buildMenus(tab)
+
+		expect(browserApi.menus.refresh).toHaveBeenCalledTimes(1)
 	})
 })
 

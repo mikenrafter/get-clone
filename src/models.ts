@@ -24,6 +24,11 @@ export interface MenusOnClickInfo {
 	parentMenuItemId?: string
 }
 
+export interface MenusOnShownInfo {
+	contexts: string[]
+	tabId?: number
+}
+
 export interface TabChangeInfo {
 	status?: string
 	url?: string
@@ -66,6 +71,10 @@ export interface RuntimeApi {
 export interface MenusApi {
 	create(details: MenusCreateDetails): Promise<void>
 	removeAll(): Promise<void>
+	refresh(): Promise<void>
+	onShown: {
+		addListener(listener: (info: MenusOnShownInfo, tab?: Tab) => void | Promise<void>): void
+	}
 	onClicked: {
 		addListener(listener: (info: MenusOnClickInfo, tab?: Tab) => void | Promise<void>): void
 	}

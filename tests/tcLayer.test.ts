@@ -8,6 +8,8 @@ function makeBrowserApi(): BrowserApi {
 		menus: {
 			create: vi.fn().mockResolvedValue(undefined),
 			removeAll: vi.fn().mockResolvedValue(undefined),
+			refresh: vi.fn().mockResolvedValue(undefined),
+			onShown: { addListener: vi.fn() },
 			onClicked: { addListener: vi.fn() },
 		},
 		tabs: {
