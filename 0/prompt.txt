@@ -1,0 +1,28 @@
+There is still a 3-tier menu thing going on. The clear site data for this container menu item should be in the same menu as the primary. That top-level nesting isn't desired. Change that.
+
+Before you do, in plaintext show me what each level of the menu is going to look like (with example perm/temp containers)
+
+---
+
+case 2 and 3 are incorrect. That "Clone to * Container" top level item is not desired. In fact, currently we have "Get Clone" as the true top-level item. That's not desired. Your whole hierarchy here is nested. I desire "Get Clone" to instead be "Clone to * Container". If that's what it looks like, then your hierarchy is correct. So, small tweak overall.
+
+[Attached image "image.png" is saved at: /home/v0id/.t3/userdata/attachments/78cc011b-7d9c-40b7-87e2-0b8163a64586-d0095454-8d17-4b12-8aca-a038b0b20f1c.png]
+
+---
+
+Oh! and like the other addons, I would also like "no container"
+
+---
+
+* as an option in the primary menu, in all cases
+
+---
+
+Disable instead of ommitting. In all cases, the active tab (specific temporary or permanent) should be present but disabled in the menus. Aside from that. Looks good, get going
+
+---
+
+The extension is spitting this:
+Error: Invalid domain: ".localhost" 
+
+The menu looks much better, but I need for you to handle that "tell the user to upgrade permissions" aspect now. What are our options for requesting this of the user?
