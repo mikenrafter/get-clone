@@ -7,9 +7,8 @@ import {
 	MENU_SECONDARY,
 	MENU_CLEAR,
 	MENU_RESTRICTED,
-	NEW_TEMP_CONTAINER_SENTINEL,
+    NEW_TEMP_CONTAINER_SENTINEL,
 	NO_CONTAINER,
-	QUARANTINED_DOMAINS,
 	PRIVILEGED_URL_SCHEMES,
 } from '../constants'
 
@@ -33,17 +32,6 @@ export class MenuHandlerImpl implements MenuHandler {
 
 		if (tab.url !== undefined && PRIVILEGED_URL_SCHEMES.some(scheme => tab.url!.startsWith(scheme))) {
 			await browserApi.menus.removeAll()
-			await browserApi.menus.refresh()
-			return
-		}
-
-		if (tab.url !== undefined && QUARANTINED_DOMAINS.includes(new URL(tab.url).hostname as (typeof QUARANTINED_DOMAINS)[number])) {
-			await browserApi.menus.removeAll()
-			await browserApi.menus.create({
-				id: MENU_RESTRICTED,
-				title: "Get Clone is restricted here — enable 'Run on sites with restrictions' in about:addons",
-				contexts: ['tab'],
-			})
 			await browserApi.menus.refresh()
 			return
 		}
@@ -115,7 +103,13 @@ export class MenuHandlerImpl implements MenuHandler {
 		const menuItemId = String(info.menuItemId)
 
 		if (menuItemId === MENU_CLEAR) {
-			await clearRuntime.clearDomain(tab)
+			try {
+				await clearRuntime.clearDomain(tab)
+			} catch {
+				const hostname = tab.url !== undefined ? new URL(tab.url).hostname : ''
+				const infoUrl = browserApi.runtime.getURL(`info/restricted-site.html?domain=${encodeURIComponent(hostname)}`)
+				await browserApi.tabs.create({ url: infoUrl })
+			}
 			return
 		}
 
@@ -135,10 +129,16 @@ export class MenuHandlerImpl implements MenuHandler {
 			return
 		}
 
-		if (remainder === NEW_TEMP_CONTAINER_SENTINEL) {
-			await cloneRuntime.cloneToTemporary(tab)
-		} else {
-			await cloneRuntime.cloneToContainer(tab, remainder)
+		try {
+			if (remainder === NEW_TEMP_CONTAINER_SENTINEL) {
+				await cloneRuntime.cloneToTemporary(tab)
+			} else {
+				await cloneRuntime.cloneToContainer(tab, remainder)
+			}
+		} catch {
+			const hostname = tab.url !== undefined ? new URL(tab.url).hostname : ''
+			const infoUrl = browserApi.runtime.getURL(`info/restricted-site.html?domain=${encodeURIComponent(hostname)}`)
+			await browserApi.tabs.create({ url: infoUrl })
 		}
 	}
 

@@ -466,10 +466,10 @@ describe('MenuHandlerImpl.buildMenus — TC present, active tab in a permanent c
 })
 
 // ---------------------------------------------------------------------------
-// Restricted-site gating — checked before any other menu build logic
+// Privileged-page gating (about:, moz-extension:, etc.) — no menu ever shown
 // ---------------------------------------------------------------------------
 
-describe('MenuHandlerImpl.buildMenus — restricted-site gating', () => {
+describe('MenuHandlerImpl.buildMenus — privileged pages', () => {
 	let browserApi: BrowserApi
 	let tcLayer: TcLayer
 	let cloneRuntime: CloneRuntime
@@ -503,7 +503,7 @@ describe('MenuHandlerImpl.buildMenus — restricted-site gating', () => {
 		expect(browserApi.menus.refresh).toHaveBeenCalledTimes(1)
 	})
 
-	it('does not bother querying containers for a privileged page', async () => {
+	it('does not query containers for a privileged page', async () => {
 		const tab: Tab = { id: 1, url: 'about:preferences', index: 0, windowId: 1 }
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
@@ -511,60 +511,17 @@ describe('MenuHandlerImpl.buildMenus — restricted-site gating', () => {
 		expect(browserApi.contextualIdentities.query).not.toHaveBeenCalled()
 	})
 
-	it('creates only MENU_RESTRICTED on a quarantined domain', async () => {
-		const tab: Tab = { id: 1, url: 'https://addons.mozilla.org/en-US/firefox/', index: 0, windowId: 1 }
+	it('builds the normal menu for addons.mozilla.org (no pre-gating by domain)', async () => {
+		const tab: Tab = { id: 1, url: 'https://addons.mozilla.org/en-US/firefox/', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
 
 		const calls = createCallsOf(browserApi)
-		expect(calls).toHaveLength(1)
-		expect(calls[0]!.id).toBe(MENU_RESTRICTED)
+		expect(calls.find(c => c.id === MENU_PRIMARY)).toBeDefined()
+		expect(calls.find(c => c.id === MENU_RESTRICTED)).toBeUndefined()
 	})
 
-	it('MENU_RESTRICTED item has tab context and an explanatory title mentioning the restriction', async () => {
-		const tab: Tab = { id: 1, url: 'https://addons.mozilla.org/en-US/firefox/', index: 0, windowId: 1 }
-		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
-		await handler.buildMenus(tab)
-
-		const calls = createCallsOf(browserApi)
-		const restricted = findById(calls, MENU_RESTRICTED)
-		expect(restricted).toBeDefined()
-		expect(restricted!.contexts).toEqual(['tab'])
-		expect(restricted!.title).toBeDefined()
-		expect(restricted!.title!.toLowerCase()).toContain('restrict')
-	})
-
-	it('calls removeAll + refresh (and no create beyond MENU_RESTRICTED) for every quarantined domain', async () => {
-		const quarantinedUrls = [
-			'https://accounts.firefox.com/signin',
-			'https://support.mozilla.org/en-US/',
-			'https://sync.services.mozilla.com/',
-		]
-
-		for (const url of quarantinedUrls) {
-			browserApi = makeBrowserApi()
-			;(browserApi.contextualIdentities.query as ReturnType<typeof vi.fn>).mockResolvedValue(allContainers)
-			const tab: Tab = { id: 1, url, index: 0, windowId: 1 }
-			const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
-			await handler.buildMenus(tab)
-
-			const calls = createCallsOf(browserApi)
-			expect(calls).toHaveLength(1)
-			expect(calls[0]!.id).toBe(MENU_RESTRICTED)
-			expect(browserApi.menus.removeAll).toHaveBeenCalledTimes(1)
-			expect(browserApi.menus.refresh).toHaveBeenCalledTimes(1)
-		}
-	})
-
-	it('does not bother querying containers for a quarantined domain', async () => {
-		const tab: Tab = { id: 1, url: 'https://addons.mozilla.org/en-US/firefox/', index: 0, windowId: 1 }
-		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
-		await handler.buildMenus(tab)
-
-		expect(browserApi.contextualIdentities.query).not.toHaveBeenCalled()
-	})
-
-	it('still builds the normal single-top-level menu for an ordinary https site', async () => {
+	it('builds the normal menu for an ordinary https site', async () => {
 		const tab: Tab = { id: 1, url: 'https://example.com', index: 0, cookieStoreId: 'firefox-container-1', windowId: 1 }
 		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
 		await handler.buildMenus(tab)
@@ -642,5 +599,39 @@ describe('MenuHandlerImpl.handleClick', () => {
 		expect(browserApi.runtime.getURL).toHaveBeenCalledWith('info/restricted-site.html?domain=example.com')
 		expect(browserApi.tabs.create).toHaveBeenCalledWith({ url: 'moz-extension://test/info/restricted-site.html?domain=example.com' })
 		expect(clearRuntime.clearDomain).not.toHaveBeenCalled()
+	})
+
+	it('opens the restricted-site info page when cloneToContainer throws', async () => {
+		;(cloneRuntime.cloneToContainer as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Permission denied'))
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.handleClick({ menuItemId: `${MENU_PRIMARY}-firefox-container-2` }, tab)
+
+		expect(browserApi.runtime.getURL).toHaveBeenCalledWith('info/restricted-site.html?domain=example.com')
+		expect(browserApi.tabs.create).toHaveBeenCalledWith({ url: 'moz-extension://test/info/restricted-site.html?domain=example.com' })
+	})
+
+	it('opens the restricted-site info page when cloneToTemporary throws', async () => {
+		;(cloneRuntime.cloneToTemporary as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Permission denied'))
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.handleClick({ menuItemId: `${MENU_PRIMARY}-${NEW_TEMP_CONTAINER_SENTINEL}` }, tab)
+
+		expect(browserApi.runtime.getURL).toHaveBeenCalledWith('info/restricted-site.html?domain=example.com')
+		expect(browserApi.tabs.create).toHaveBeenCalledWith({ url: 'moz-extension://test/info/restricted-site.html?domain=example.com' })
+	})
+
+	it('opens the restricted-site info page when clearDomain throws', async () => {
+		;(clearRuntime.clearDomain as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Permission denied'))
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.handleClick({ menuItemId: MENU_CLEAR }, tab)
+
+		expect(browserApi.runtime.getURL).toHaveBeenCalledWith('info/restricted-site.html?domain=example.com')
+		expect(browserApi.tabs.create).toHaveBeenCalledWith({ url: 'moz-extension://test/info/restricted-site.html?domain=example.com' })
+	})
+
+	it('does not open the info page when cloneToContainer succeeds', async () => {
+		const handler = new MenuHandlerImpl({ browserApi, tcLayer, cloneRuntime, clearRuntime })
+		await handler.handleClick({ menuItemId: `${MENU_PRIMARY}-firefox-container-2` }, tab)
+
+		expect(browserApi.tabs.create).not.toHaveBeenCalled()
 	})
 })

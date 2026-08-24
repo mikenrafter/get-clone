@@ -25,27 +25,8 @@ export const MENU_SECONDARY = 'get-clone-secondary'
 /** Top-level menu item id for "clear domain data for this container". Always present on accessible sites. */
 export const MENU_CLEAR = 'get-clone-clear'
 
-/** Menu item id for the single informational item shown instead of the normal menu on quarantined domains. */
+/** Menu item id for the informational page opened when a clone/clear action fails (e.g. restricted domain). */
 export const MENU_RESTRICTED = 'get-clone-restricted'
-
-/**
- * Domains Firefox quarantines from extension access by default. Get Clone's menu cannot
- * function here unless the user has explicitly granted "Run on sites with restrictions".
- */
-export const QUARANTINED_DOMAINS = [
-	'addons.mozilla.org',
-	'addons.cdn.mozilla.net',
-	'discovery.addons.mozilla.org',
-	'accounts.firefox.com',
-	'accounts-static.cdn.mozilla.net',
-	'api.accounts.firefox.com',
-	'oauth.accounts.firefox.com',
-	'profile.accounts.firefox.com',
-	'content.cdn.mozilla.net',
-	'support.mozilla.org',
-	'sync.services.mozilla.com',
-	'install.mozilla.org',
-] as const
 
 /** URL schemes for privileged browser pages where no extension menu should ever appear. */
 export const PRIVILEGED_URL_SCHEMES = ['about:', 'moz-extension:', 'chrome:', 'resource:'] as const

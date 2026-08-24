@@ -50,29 +50,24 @@
 	</style>
 </head>
 <body>
-	<h1>Get Clone can't act on <code id="domain">this site</code></h1>
+	<h1>Get Clone couldn't act on <code id="domain">this site</code></h1>
 	<p>
-		Firefox blocks extensions from running on a short list of domains it
-		"quarantines" by default, to limit the blast radius if a malicious
-		extension is ever discovered. <code id="domain-inline">This domain</code>
-		is on that list, so Get Clone has no access here until you allow it.
+		Firefox blocked the action. This happens on domains Firefox restricts by default.
+		To allow it, enable <strong>Run on sites with restrictions</strong> for Get Clone in
+		the Add-ons Manager.
 	</p>
 
-	<h2>To fix it</h2>
 	<ol>
-		<li>Click the button below to open the Add-ons Manager.</li>
-		<li>Find <strong>Get Clone</strong> in the list and click it.</li>
-		<li>Under <strong>Details</strong>, toggle <strong>Run on sites with restrictions</strong> on.</li>
+		<li>Open <a id="addons-link" href="#" title="about:addons">about:addons</a>.</li>
+		<li>Find <strong>Get Clone</strong> and click it.</li>
+		<li>Under <strong>Details</strong>, turn on <strong>Run on sites with restrictions</strong>.</li>
 		<li>Come back and try again.</li>
 	</ol>
 
-	<button id="open-addons">Open about:addons</button>
-
 	<p class="note">
-		Get Clone only ever moves data between containers, locally, on your own
-		machine — cookies and site storage never leave your device. Allowing it
-		here doesn't change that. You can read Mozilla's own explanation of
-		quarantined domains at
+		Get Clone only moves data between containers, locally, on your machine.
+		Cookies and site storage never leave your device. You can read Mozilla's
+		explanation of restricted domains at
 		<a href="https://support.mozilla.org/en-US/kb/quarantined-domains" target="_blank" rel="noopener noreferrer">
 			support.mozilla.org/kb/quarantined-domains</a>.
 	</p>
