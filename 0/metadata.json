@@ -1,0 +1,168 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "01M0S3EQS460SRDCJJW67BVS3V",
+  "session_id": "f95b44ff-d79b-4407-a800-d8da37f3e1e5",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-24T05:21:27.132419173Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "save_step_count": 2,
+  "files_touched": [
+    "src/background/clearRuntime.ts",
+    "src/background/menuHandler.ts",
+    "src/models.ts",
+    "tests/clearRuntime.test.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5",
+  "turn_id": "3b0ef35ea8f5",
+  "checkpoint_transcript_start": 751,
+  "transcript_lines_at_start": 751,
+  "compact_transcript_start": 177,
+  "token_usage": {
+    "input_tokens": 52,
+    "cache_creation_tokens": 37861,
+    "cache_read_tokens": 4205022,
+    "output_tokens": 20724,
+    "api_call_count": 26,
+    "subagent_tokens": {
+      "input_tokens": 116,
+      "cache_creation_tokens": 242313,
+      "cache_read_tokens": 2603367,
+      "output_tokens": 59590,
+      "api_call_count": 58
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "prompt-skill-claude-code-residual-tdd-implement-2026-08-24T00:22:57.572935292Z",
+      "event_type": "prompt_invocation",
+      "skill": {
+        "name": "residual-tdd-implement"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "prompt_slash_command",
+        "confidence": "explicit"
+      },
+      "turn_id": "29a091e272dc",
+      "timestamp": "2026-08-24T00:22:57.572935292Z",
+      "native": {
+        "command": "/residual-tdd-implement"
+      },
+      "collapse": {
+        "target": "user_message",
+        "label": "/residual-tdd-implement",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01DFWgpDfDbDLPZNkUi59enG",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "residual-naive-draft"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "3b0ef35ea8f5",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 45,
+        "end": 46,
+        "entry_ids": [
+          "9af492e6-086b-4b12-9649-fd486a278b52"
+        ],
+        "tool_use_id": "toolu_01DFWgpDfDbDLPZNkUi59enG"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01DFWgpDfDbDLPZNkUi59enG"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: residual-naive-draft",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_019WK6aZFfkzmdbaytYsWxvn",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "residual-tdd-implement"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "3b0ef35ea8f5",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 658,
+        "end": 659,
+        "entry_ids": [
+          "1593bfdd-b3ca-497b-bc83-a586901bc0dd"
+        ],
+        "tool_use_id": "toolu_019WK6aZFfkzmdbaytYsWxvn"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_019WK6aZFfkzmdbaytYsWxvn"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: residual-tdd-implement",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 12
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-24T05:21:26.93317474Z",
+    "agent_lines": 59,
+    "agent_removed": 101,
+    "human_added": 118,
+    "human_modified": 6,
+    "human_removed": 0,
+    "total_committed": 183,
+    "total_lines_changed": 286,
+    "agent_percentage": 55.94405594405595,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 100,
+      "user_lines_removed": 6,
+      "agent_lines_added": 65,
+      "agent_lines_removed": 101,
+      "user_added_per_file": {
+        "src/background/clearRuntime.ts": 52,
+        "src/background/menuHandler.ts": 48
+      },
+      "user_removed_per_file": {
+        "src/background/menuHandler.ts": 6
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 165,
+      "agent_lines_removed": 107
+    }
+  ]
+}

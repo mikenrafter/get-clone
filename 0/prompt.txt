@@ -1,0 +1,26 @@
+<task-notification>
+<task-id>a55f6b165a7e5ce66</task-id>
+<tool-use-id>toolu_01HRbhs8LqL9ohXBNScHJAXm</tool-use-id>
+<output-file>/tmp/claude-1000/-home-v0id-Documents-repos-get-clone/f95b44ff-d79b-4407-a800-d8da37f3e1e5/tasks/a55f6b165a7e5ce66.output</output-file>
+<status>completed</status>
+<summary>Agent "Implement menuHandler restructure + restricted-site gating" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All green. Summary below.
+
+## Result
+
+**tests/menuHandler.test.ts**: 34/34 passing (was 18 passed / 16 failed before).
+**tests/tcLayer.test.ts**: 9/9 passing, **tests/cloneRuntime.test.ts**: 12/12 passing — confirmed no regressions.
+
+Only file touched: `/home/v0id/Documents/repos/get-clone/src/background/menuHandler.ts`. No new file was needed since `src/background/clearRuntime.ts` doesn't exist yet on disk but `import type { ClearRuntime } from './clearRuntime'` resolves fine for vitest (esbuild strips type-only imports without requiring the module to exist).
+
+Changes made:
+1. Added `import type { ClearRuntime } from './clearRuntime'` and imported `MENU_CLEAR`, `MENU_RESTRICTED`, `QUARANTINED_DOMAINS`, `PRIVILEGED_URL_SCHEMES` from `../constants`.
+2. Added `readonly clearRuntime: ClearRuntime` to `MenuHandlerDeps`.
+3. `buildMenus`: added restricted-site gating as the very first checks — privileged scheme prefix match → `removeAll()` + `refresh()` + no items; quarantined hostname match → `removeAll()` + single `MENU_RESTRICTED` item (title contains "restrict") + `refresh()`. Both return before touching `contextualIdentities.query`.
+4. `buildMenus` normal path: added `MENU_CLEAR` top-level item creation in the no-TC branch, and reordered the TC-present branch so `MENU_SECONDARY` (parented under `MENU_PRIMARY`) is created — along with its children — *before* the flat `MENU_PRIMARY` container children and the sentinel; added `MENU_CLEAR` as a top-level sibling of `MENU_PRIMARY` at the end.
+5. `handleClick`: added early dispatch for `MENU_CLEAR` → `clearRuntime.clearDomain(tab)` and `MENU_RESTRICTED` → `browserApi.tabs.create({ url: 'about:addons' })`, both returning before the existing prefix-based primary/secondary/sentinel dispatch logic (left unchanged).
+
+Per the task instructions, `tests/clearRuntime.test.ts` was not run (that's the parallel workstream's responsibility and expected to remain red until `clearRuntime.ts`'s real logic lands).</result>
+<usage><subagent_tokens>48964</subagent_tokens><tool_uses>17</tool_uses><duration_ms>68337</duration_ms></usage>
+</task-notification>
