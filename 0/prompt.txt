@@ -1,0 +1,9 @@
+Integrate these into the project. This svg should become the main project SVG. The graphite file should follow the pattern you see in ../containMarks. Of course rename the files. Do not commit the experimental efforts in the repo. Rebuild the extension in both xpi and zip format. If the build tooling needs updating, then containMarks will also provide a template to follow there.
+Uploaded file: Untitled Document 4_6_.graphite
+Path: /home/v0id/.paseo/uploads/upload_6ad6e386-0fbb-48da-9cef-0a9f54345a1d/Untitled Document 4_6_.graphite
+MIME: application/octet-stream
+Size: 227312 bytes
+Uploaded file: Untitled Document 4_4_.svg
+Path: /home/v0id/.paseo/uploads/upload_62a90654-d30c-41aa-a52c-356103b7a0cb/Untitled Document 4_4_.svg
+MIME: image/svg+xml
+Size: 6526 bytes

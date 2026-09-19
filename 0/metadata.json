@@ -1,0 +1,109 @@
+{
+  "cli_version": "0.10.6",
+  "checkpoint_id": "01M2WN6KSDW30S40GBAJ58P6V5",
+  "session_id": "107ad4d6-41ab-43ec-bcd2-20ab95c77615",
+  "strategy": "manual-commit",
+  "created_at": "2026-09-19T11:00:41.031821058Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "README.md",
+    "extension-icon.graphite",
+    "package.json",
+    "src/manifest.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5",
+  "turn_id": "493013a26d5c",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 44,
+    "cache_creation_tokens": 33422,
+    "cache_read_tokens": 932205,
+    "output_tokens": 9344,
+    "api_call_count": 22
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-09-19T11:00:40.959945861Z",
+    "agent_lines": 3,
+    "agent_removed": 1,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3,
+    "total_lines_changed": 4,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 548,
+      "user_lines_removed": 91,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/commands/residual-defense-walk.md": 13,
+        ".claude/commands/residual-framework.md": 13,
+        ".gitignore": 3,
+        "get-clone-variants.html": 91,
+        "residual/.storage-hashes": 11,
+        "residual/attractors.csv": 3,
+        "residual/config.toml": 12,
+        "residual/iterations/1.md": 8,
+        "residual/iterations/2.md": 8,
+        "residual/lexicon.csv": 10,
+        "residual/purposes.csv": 6,
+        "residual/skills/atam.md": 13,
+        "residual/skills/fmea.md": 13,
+        "residual/skills/integrate.md": 13,
+        "residual/skills/naive-draft.md": 13,
+        "residual/skills/purpose-walk.md": 13,
+        "residual/skills/stressor-walk.md": 13,
+        "residual/skills/tdd-implement.md": 13,
+        "residual/stressors.csv": 6,
+        "src/icons/get-clone-experiment-git-2.svg": 16,
+        "src/icons/get-clone-experiment-git.svg": 21,
+        "src/icons/get-clone-experiment.svg": 21,
+        "src/icons/get-clone-v1-bl.svg": 20,
+        "src/icons/get-clone-v1-bottom-tl.svg": 8,
+        "src/icons/get-clone-v1-br.svg": 20,
+        "src/icons/get-clone-v1-top-bl.svg": 8,
+        "src/icons/get-clone-v1-top-br.svg": 8,
+        "src/icons/get-clone-v1.svg": 26,
+        "src/icons/get-clone-v2-bl.svg": 20,
+        "src/icons/get-clone-v2-bottom-tl.svg": 8,
+        "src/icons/get-clone-v2-br.svg": 20,
+        "src/icons/get-clone-v2-top-bl.svg": 8,
+        "src/icons/get-clone-v2-top-br.svg": 8,
+        "src/icons/get-clone-v2.svg": 26,
+        "src/icons/get-clone.svg": 30,
+        "src/manifest.json": 5
+      },
+      "user_removed_per_file": {
+        ".residual/skills/atam.md": 13,
+        ".residual/skills/fmea.md": 13,
+        ".residual/skills/integrate.md": 13,
+        ".residual/skills/naive-draft.md": 13,
+        ".residual/skills/purpose-walk.md": 13,
+        ".residual/skills/stressor-walk.md": 13,
+        ".residual/skills/tdd-implement.md": 13
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 26,
+      "user_lines_removed": 0,
+      "agent_lines_added": 173,
+      "agent_lines_removed": 92,
+      "user_added_per_file": {
+        ".claude/commands/residual-defense-walk.md": 13,
+        ".claude/commands/residual-framework.md": 13
+      }
+    }
+  ]
+}
