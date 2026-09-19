@@ -6,6 +6,7 @@
   "scripts": {
     "build": "esbuild src/background.ts --bundle --platform=browser --format=iife --target=firefox115 --outfile=src/background.js",
     "build:firefox": "npm run build && web-ext build --source-dir src --artifacts-dir dist --overwrite-dest --ignore-files '**/*.ts'",
+    "build:firefox:xpi": "npm run build:firefox && node -e \"const fs=require('node:fs');const path=require('node:path');const dist='dist';const zips=fs.readdirSync(dist).filter((file)=>file.endsWith('.zip')).sort();if(zips.length===0)throw new Error('No zip artifact found in dist');const zipPath=path.join(dist,zips.at(-1));const xpiPath=zipPath.replace(/\\.zip$/,'.xpi');fs.copyFileSync(zipPath,xpiPath);console.log('Created',xpiPath);\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

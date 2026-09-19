@@ -3,6 +3,11 @@
   "name": "Get Clone",
   "version": "0.1.0",
   "description": "Clone a tab's session into another container, permanent or temporary, without touching the source tab.",
+  "icons": {
+    "16": "icons/get-clone.svg",
+    "32": "icons/get-clone.svg",
+    "64": "icons/get-clone.svg"
+  },
   "browser_specific_settings": {
     "gecko": {
       "id": "get-clone@get-clone",

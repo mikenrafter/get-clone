@@ -4,7 +4,7 @@ Clone a tab's session into another container — permanent or temporary — with
 
 <p align="left">
   get-clone on the Firefox Add-ons Store (coming soon)
-  <img src="./src/icons/temp-container.svg" width="60px" height="60px" alt="Get Clone icon — a temporary container symbol"/>
+  <img src="./src/icons/get-clone.svg" width="60px" height="60px" alt="Get Clone icon — a plus-shaped clone glyph over a container tab"/>
 </p>
 
 ---
