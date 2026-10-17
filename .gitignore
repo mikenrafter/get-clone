@@ -3,3 +3,5 @@ dist/
 src/background.js
 *.xpi
 web-ext-artifacts/
+# Linked by `nix develop` (see flake.nix).
+.firefox-addon-live

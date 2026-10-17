@@ -4,20 +4,33 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    # Live Firefox sessions for the Marionette tests and README captures.
+    firefox-addon-live = {
+      url = "github:mikenrafter/firefox-addon-live";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, firefox-addon-live }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
+        # Signed Temporary Containers from addons.mozilla.org, installed next to
+        # Get Clone for the temporary-container capture and live test.
+        temporaryContainersXpi = pkgs.fetchurl {
+          url = "https://addons.mozilla.org/firefox/downloads/file/3723251/temporary_containers-1.9.2.xpi";
+          hash = "sha256-M0CgjCm+fIO9D+o/wn/eceRgikUy2TIRS0OappDn7cA=";
+        };
       in {
-        devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            nodejs_22
-          ];
-
+        # Node, vanilla Firefox (FIREFOX_BINARY), Xvfb, ffmpeg, ImageMagick and
+        # xdotool, plus the firefox-addon-live link that package.json uses.
+        devShells.default = firefox-addon-live.lib.devShell {
+          inherit pkgs;
           shellHook = ''
+            export TEMPORARY_CONTAINERS_XPI=${temporaryContainersXpi}
             echo "Get Clone dev shell ready: npm install && npm test"
+            echo "Live Firefox tests: npm run test:live   README captures: npm run capture:readme"
           '';
         };
       });
